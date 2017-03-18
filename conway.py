@@ -1,12 +1,54 @@
+import subprocess as sp
+import logging
+
 def check_cell(matrix, row_to_check, column_to_check):
     try:
         return matrix[row_to_check][column_to_check]
     except IndexError:
         return 0
 
-import curses  # Get the module
-stdscr = curses.initscr()  # initialise it
-stdscr.clear()  # Clear the screen
+def clear_screen():
+    return sp.call('clear',shell=True)
+
+def simulate(matrix):
+    for row_number in range(0,len(matrix)):
+        for column_number in range(0,len(matrix)):
+            my_value = matrix[row_number][column_number]
+            count_of_neighbors = 0
+            logging.debug("Now at %s,%s" % (row_number,column_number))
+
+            # X X X
+            # X O X
+            # X X X
+            count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number-1,column_number-1)
+            count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number-1,column_number)
+            count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number-1,column_number+1)
+
+            count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number,column_number-1)
+            count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number,column_number+1)
+
+            count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number+1,column_number-1)
+            count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number+1,column_number)
+            count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number+1,column_number+1)
+            #
+
+            # live cells with <2 live neighbours dies
+            # live cells with 2-3 live neighbours lives on to next generation.
+            # live cell >3 live neighbours dies
+            # dead cell 3 live neighbours becomes a live cell
+
+            if my_value:
+                if count_of_neighbors < 2 or count_of_neighbors > 3:
+                    my_value = 0
+                    logging.debug("Dead!")
+            else:
+                if count_of_neighbors == 3:
+                    my_value = 1
+                    logging.debug("Zombie!")
+
+            matrix[row_number][column_number] = my_value
+
+    return matrix
 
 # Creates a list containing 12 lists, each of 12 items, all set to 0
 w, h = 12, 12;
@@ -48,47 +90,17 @@ matrix[10][9] = 1
 matrix[11][10] = 1
 #
 
-for row_number in range(0,len(matrix)):
-    for column_number in range(0,len(matrix)):
-        my_value = matrix[row_number][column_number]
-        count_of_neighbors = 0
-        print "Now at %s,%s" % (row_number,column_number)
-
-        # X X X
-        # X O X
-        # X X X
-        count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number-1,column_number-1)
-        count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number-1,column_number)
-        count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number-1,column_number+1)
-
-        count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number,column_number-1)
-        count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number,column_number+1)
-
-        count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number+1,column_number-1)
-        count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number+1,column_number)
-        count_of_neighbors = count_of_neighbors + check_cell(matrix,row_number+1,column_number+1)
-        #
 
 
 
-for i in range(0,10):
-    # live cells with <2 live neighbours dies
-# live cells with 2-3 live neighbours lives on to next generation.
-# live cell >3 live neighbours dies
-# dead cell 3 live neighbours becomes a live cell
+count = 0
+#for i in range(0,100):
+while True:
+    clear_screen()
+    matrix = simulate(matrix)
 
-    if my_value:
-        if count_of_neighbors < 2 and count_of_neighbors > 3:
-            my_value = 0
-            print "Dead!"
-    else:
-        if count_of_neighbors == 3:
-            my_value = 1
-            print "Zombie!"
-
-    matrix[row_number][column_number] = my_value
-
-    print "Output:"
+#    print "Output:"
+    print "Simulation #" + str(count)
     for row in matrix:
         output = []
         for cell in row:
@@ -96,5 +108,6 @@ for i in range(0,10):
                 output.append('-')
             else:
                 output.append(' ')
-        print ' '.join(output)
-#    stdscr.clear()  # Clear the screen
+        print 'R: ' + ' '.join(output)
+
+    count = count + 1
