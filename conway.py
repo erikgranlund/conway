@@ -184,6 +184,9 @@ def run(planet):
     #for i in range(0,10):
         clear_screen()
         planet.simulate()
-        print(str(planet))
+        print str(planet)
 
-run(Planet())
+#
+
+if __name__ == "__main__":
+    run(Planet())
