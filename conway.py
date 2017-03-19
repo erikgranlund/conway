@@ -1,17 +1,126 @@
 import subprocess
 
-class ConwayPlanet(object):
+class Planet(object):
     '''
     Contains the whole "planet" that each "organisim" on the simulation lives.
     '''
+    def get_times_simulated(self):
+        '''
+        Return the number of simulations the planet has been through
+        '''
+        return self.times_simulated
+
     def __init__(self):
-        pass
+        self.times_simulated = 0
+
+        size = 12
+        self.matrix = [[Organism() for x in range(size)] for y in range(size)]
+
+        #     0 1 2 3 4 5 6 7 8 9 0 1
+        # 0 # X X . . . . . . . . . .
+        # 1 # X X X . . . . . . . . . - (1,1) dies
+        # 2 # . . . . . . . . . . . .
+        # 3 # . . . . . . X X . . . . - (6,3) lives
+        # 4 # . . . . . . X . . . . .
+        # 5 # . . . . . . . . X . . .
+        # 6 # . . . . . . . X X X . . - (8,6) dies
+        # 7 # . . . . . . . . X . . .
+        # 8 # . . . . . . . . . . . .
+        # 9 # . . . . . . . . . . X .
+        # 0 # . . . . . . . . . X . . - (0,0) resurrects
+        # 1 # . . . . . . . . . . X .
+        #     0 1 2 3 4 5 6 7 8 9 0 1
+
+        self.matrix[0][0].set_alive(True)
+        self.matrix[0][1].set_alive(True)
+        self.matrix[1][0].set_alive(True)
+        self.matrix[1][1].set_alive(True)
+        self.matrix[1][2].set_alive(True)
+
+        self.matrix[3][6].set_alive(True)
+        self.matrix[3][7].set_alive(True)
+        self.matrix[4][6].set_alive(True)
+
+        self.matrix[5][8].set_alive(True)
+        self.matrix[6][7].set_alive(True)
+        self.matrix[6][8].set_alive(True)
+        self.matrix[6][9].set_alive(True)
+        self.matrix[7][8].set_alive(True)
+
+        self.matrix[9][10].set_alive(True)
+        self.matrix[10][9].set_alive(True)
+        self.matrix[11][10].set_alive(True)
+
+    def __str__(self):
+        output = "Simulation #%d\n" % (self.times_simulated)
+        for row in self.matrix:
+            row_str = []
+            for cell in row:
+                row_str.append(str(cell))
+            output += 'R: ' + ' '.join(row_str) + '\n'
+        return output
 
     def simulate(self):
         '''
         Run one "round" of simulation according to the rules of the planet
         '''
-        pass
+        self.times_simulated += 1
+
+        for row_number in range(0, len(self.matrix)):
+            for column_number in range(0, len(self.matrix)):
+                neighbors = 0
+
+                # X X X
+                # X O X
+                # X X X
+                neighbors += int(self.check_cell(row_number-1, column_number-1))
+                neighbors += int(self.check_cell(row_number-1, column_number))
+                neighbors += int(self.check_cell(row_number-1, column_number+1))
+
+                neighbors += int(self.check_cell(row_number, column_number-1))
+                neighbors += int(self.check_cell(row_number, column_number+1))
+
+                neighbors += int(self.check_cell(row_number+1, column_number-1))
+                neighbors += int(self.check_cell(row_number+1, column_number))
+                neighbors += int(self.check_cell(row_number+1, column_number+1))
+                #
+
+                # live cells with <2 live neighbours dies
+                # live cells with 2-3 live neighbours lives on to next generation.
+                # live cell >3 live neighbours dies
+                # dead cell 3 live neighbours becomes a live cell
+                if self.matrix[row_number][column_number].is_alive():
+                    if neighbors < 2 or neighbors > 3:
+                        #print "Killed at %d %d" % (row_number, column_number)
+                        self.matrix[row_number][column_number].kill()
+                else:
+                    if neighbors == 3:
+                        self.matrix[row_number][column_number].resurrect()
+
+    def get_organism(self, row_to_check, column_to_check):
+        '''
+        Safely returns the organism from a cell on the planet
+
+        Returns None for cells outside of the matrix.
+        '''
+        try:
+            return self.matrix[row_to_check][column_to_check]  
+        except IndexError:
+            return None      
+
+    def check_cell(self, row_to_check, column_to_check):
+        '''
+        Safely returns the value of a cell on the planet
+
+        Returns False for cells outside of the matrix.
+        '''
+        cell = self.get_organism(row_to_check,column_to_check)
+
+        if cell:
+            return cell.is_alive()
+        else:
+            return False
+
 
 class Organism(object):
     '''
@@ -59,16 +168,7 @@ class Organism(object):
         else:
             return " "
 
-def check_cell(matrix, row_to_check, column_to_check):
-    '''
-    Safely returns the value of a cell in the matrix passed.
 
-    Returns False for cells outside of the matrix.
-    '''
-    try:
-        return matrix[row_to_check][column_to_check].is_alive()
-    except IndexError:
-        return False
 
 def clear_screen():
     '''
@@ -76,112 +176,14 @@ def clear_screen():
     '''
     return subprocess.call('clear', shell=True)
 
-
-def init():
-    '''
-    Load an initial configuration of a matrix.
-
-    Returns an array of arrrays.
-    '''
-
-    # Populate a 12x12 matrix with 0's
-    size = 12
-    matrix = [[Organism() for x in range(size)] for y in range(size)]
-
-    #     0 1 2 3 4 5 6 7 8 9 0 1
-    # 0 # X X . . . . . . . . . .
-    # 1 # X X X . . . . . . . . . - (1,1) dies
-    # 2 # . . . . . . . . . . . .
-    # 3 # . . . . . . X X . . . . - (6,3) lives
-    # 4 # . . . . . . X . . . . .
-    # 5 # . . . . . . . . X . . .
-    # 6 # . . . . . . . X X X . . - (8,6) dies
-    # 7 # . . . . . . . . X . . .
-    # 8 # . . . . . . . . . . . .
-    # 9 # . . . . . . . . . . X .
-    # 0 # . . . . . . . . . X . . - (0,0) resurrects
-    # 1 # . . . . . . . . . . X .
-    #     0 1 2 3 4 5 6 7 8 9 0 1
-
-    matrix[0][0].set_alive(True)
-    matrix[0][1].set_alive(True)
-    matrix[1][0].set_alive(True)
-    matrix[1][1].set_alive(True)
-    matrix[1][2].set_alive(True)
-
-    matrix[3][6].set_alive(True)
-    matrix[3][7].set_alive(True)
-    matrix[4][6].set_alive(True)
-
-    matrix[5][8].set_alive(True)
-    matrix[6][7].set_alive(True)
-    matrix[6][8].set_alive(True)
-    matrix[6][9].set_alive(True)
-    matrix[7][8].set_alive(True)
-
-    matrix[9][10].set_alive(True)
-    matrix[10][9].set_alive(True)
-    matrix[11][10].set_alive(True)
-
-    return matrix
-
-def simulate(matrix):
-    '''
-    Run the rules of the conway simulation on each cell of the provided matrix.
-
-    Returns the result of this simulation.
-    '''
-    for row_number in range(0, len(matrix)):
-        for column_number in range(0, len(matrix)):
-            neighbors = 0
-
-            # X X X
-            # X O X
-            # X X X
-            neighbors += int(check_cell(matrix, row_number-1, column_number-1))
-            neighbors += int(check_cell(matrix, row_number-1, column_number))
-            neighbors += int(check_cell(matrix, row_number-1, column_number+1))
-
-            neighbors += int(check_cell(matrix, row_number, column_number-1))
-            neighbors += int(check_cell(matrix, row_number, column_number+1))
-
-            neighbors += int(check_cell(matrix, row_number+1, column_number-1))
-            neighbors += int(check_cell(matrix, row_number+1, column_number))
-            neighbors += int(check_cell(matrix, row_number+1, column_number+1))
-            #
-
-            # live cells with <2 live neighbours dies
-            # live cells with 2-3 live neighbours lives on to next generation.
-            # live cell >3 live neighbours dies
-            # dead cell 3 live neighbours becomes a live cell
-            if matrix[row_number][column_number].is_alive():
-                if neighbors < 2 or neighbors > 3:
-                    #print "Killed at %d %d" % (row_number, column_number)
-                    matrix[row_number][column_number].kill()
-            else:
-                if neighbors == 3:
-                    matrix[row_number][column_number].resurrect()
-
-    return matrix
-
-def run(matrix):
+def run(planet):
     '''
     Run the simulation.
     '''
-    count = 0
     while True:
     #for i in range(0,10):
         clear_screen()
-        matrix = simulate(matrix)
+        planet.simulate()
+        print(str(planet))
 
-        print "Simulation #" + str(count)
-        for row in matrix:
-            output = []
-            for cell in row:
-                output.append(str(cell))
-            print 'R: ' + ' '.join(output)
-
-        count = count + 1
-
-
-run(init())
+run(Planet())
