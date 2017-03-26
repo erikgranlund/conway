@@ -14,6 +14,7 @@ class Planet(object):
         self.times_simulated = 0
         
         size = 12
+
         self.matrix = [[Organism() for x in range(size)] for y in range(size)]
         self.load_config()
 
@@ -108,7 +109,10 @@ class Planet(object):
         try:
             return self.matrix[row_to_check][column_to_check]  
         except IndexError:
-            return None      
+            return None  
+
+    def get_organisms(self):
+        return self.matrix    
 
     def check_cell(self, row_to_check, column_to_check):
         '''
