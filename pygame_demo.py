@@ -9,10 +9,12 @@ class Grid(conway.Planet):
 
     def __init__(self):
         self.size = [640, 480]
-        super(Grid, self).__init__()
         self.screen = pygame.display.set_mode(self.size)
 
         self.organisms = []
+
+        super(Grid, self).__init__()
+        self.matrix = [[GridSpace() for x in range(12)] for y in range(12)]
 
     def add_organism(self,organism):
         self.organisms.append(organism)
@@ -29,7 +31,7 @@ class Grid(conway.Planet):
 
         for organism in self.organisms:
             organism.move()
-            pygame.draw.rect(self.screen, (0, 0, 255), organism)
+            pygame.draw.rect(self.screen, organism.get_color(), organism)
 
     def get_width(self):
         return self.size[0]
@@ -53,6 +55,10 @@ class GridSpace(pygame.Rect, conway.Organism):
         self.speed = [2, 2]
 
         self.planet = None
+        self.color = (0, 0, 255)
+
+    def get_color(self):
+        return self.color
 
     def set_planet(self, planet):
         self.planet = planet
@@ -60,8 +66,12 @@ class GridSpace(pygame.Rect, conway.Organism):
     def set_speed(self, speed):
         self.speed = speed
 
-    def is_collided_with(self):
-        return self.collidelistall(self.planet.get_organisms())
+    def get_collides(self):
+        organisms = self.planet.get_organisms()
+        collides = [organisms[x] for x in self.collidelistall(organisms)]
+        collides.remove(self)
+
+        return collides
 
     def move(self):
         if self.left < 0 or self.right > self.planet.get_width():
@@ -72,14 +82,18 @@ class GridSpace(pygame.Rect, conway.Organism):
         self.left += self.speed[0]
         self.top -= self.speed[1]
 
-        if self.is_collided_with():
-            print(self.is_collided_with())
+        collides = self.get_collides()
+
+        if collides:
+            print collides
 
 
 # colors
 black = (0, 0, 0)
 white = (255, 255, 255)
 blue = (0, 0, 255)
+green = (0, 255, 0)
+red = (255, 0, 0)
 
 planet = Grid()
 planet.add_organism(GridSpace())
@@ -88,6 +102,7 @@ x = GridSpace()
 x.set_speed([3,3])
 x.left = 100
 x.top = 100
+x.color = green
 planet.add_organism(x)
 
 pygame.init()
@@ -99,3 +114,4 @@ while 1:
 
     planet.simulate()
     pygame.display.update()
+    print planet

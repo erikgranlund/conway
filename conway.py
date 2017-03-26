@@ -12,10 +12,12 @@ class Planet(object):
 
     def __init__(self):
         self.times_simulated = 0
-
+        
         size = 12
         self.matrix = [[Organism() for x in range(size)] for y in range(size)]
+        self.load_config()
 
+    def load_config(self):
         #     0 1 2 3 4 5 6 7 8 9 0 1
         # 0 # X X . . . . . . . . . .
         # 1 # X X X . . . . . . . . . - (1,1) dies
